@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<title>Контроль Полтава</title>
+
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+body{margin:0;font-family:sans-serif;}
+#map{position:absolute;top:60px;bottom:0;width:100%; z-index:0;}
+
+#toolbar{
+position:absolute;
+top:0;left:0;right:0;height:60px;
+background:#111;
+display:flex;
+align-items:center;
+gap:10px;
+padding:8px;
+z-index:2;
+}
+
+.icon-btn,.delete-btn{
+width:44px;height:44px;
+border:2px solid transparent;
+border-radius:8px;
+background:#222;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+color:#fff;
+}
+
+.icon-btn img{max-width:34px;max-height:34px;}
+.active{border-color:#00ff88;background:#333;}
+.delete-active{border-color:#ff3333;background:#441111;}
+
+#basemap{
+margin-left:auto;
+background:#000;
+color:#fff;
+}
+
+.marker-wrapper{width:32px;height:32px;cursor:pointer;}
+.drone{
+width:100%;height:100%;
+background-size:contain;
+background-repeat:no-repeat;
+transform-origin:center center;
+}
+
+.selected{
+outline:2px solid #00ff88;
+border-radius:50%;
+}
+#watermark{
+position:absolute;
+inset:60px 0 0 0;
+z-index:8888;
+pointer-events:none;
+
+opacity:0.15;
+background-repeat:repeat;
+
+/* расстояние между надписями */
+background-size:320px 200px;
+
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='200'%3E%3Ctext x='160' y='110' text-anchor='middle' font-family='Arial' font-size='34' fill='%23000' fill-opacity='0.75'%3Econtrolpoltava%3C/text%3E%3C/svg%3E");
+}
+</style>
+</head>
+
+<body>
+
+<div id="watermark"></div>
+<div id="toolbar">
+<div class="icon-btn" data-icon="shahid-136.png"><img src="shahid-136.png"></div>
+<div class="icon-btn" data-icon="gerbera.png"><img src="gerbera.png"></div>
+<div class="icon-btn" data-icon="supercam.png"><img src="supercam.png"></div>
+<div class="icon-btn" data-icon="orlan-10.png"><img src="orlan-10.png"></div>
+<div class="icon-btn" data-icon="zala.png"><img src="zala.png"></div>
+
+<div id="deleteMode" class="delete-btn"><i class="fas fa-trash-alt"></i></div>
+
+<select id="basemap">
+<option value="osm">OpenStreetMap</option>
+<option value="terrain">Google Terrain</option>
+</select>
+</div>
+
+<div id="map"></div>
+
+<script>
+
+let currentIcon=null;
+let selectedDrone=null;
+let selectedMarker=null;
+let deleteMode=false;
+let lastDragLngLat=null;
+let directionData={type:"FeatureCollection",features:[]};
+
+////////////////////////////////////////////////////
+const osmStyle={
+version:8,
+sources:{osm:{type:"raster",tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256}},
+layers:[{id:"osm",type:"raster",source:"osm"}]
+};
+
+const terrainStyle={
+version:8,
+sources:{terrain:{type:"raster",tiles:["https://mt0.google.com/vt/lyrs=p&x={x}&y={y}&z={z}"],tileSize:256}},
+layers:[{id:"terrain",type:"raster",source:"terrain"}]
+};
+
+////////////////////////////////////////////////////
+const map=new maplibregl.Map({
+container:"map",
+style:osmStyle,
+center:[30.5,50.3],
+zoom:6
+});
+
+////////////////////////////////////////////////////
+map.on("load",()=>{
+ensureDirectionLayer();
+
+map.addSource("directions",{type:"geojson",data:directionData});
+
+map.addLayer({
+id:"direction-layer",
+type:"line",
+source:"directions",
+paint:{
+"line-color":"#ff0000",
+"line-width":2,
+"line-dasharray":[2,2]
+}
+});
+
+});
+function ensureDirectionLayer(){
+
+if(!map.getSource("directions")){
+map.addSource("directions",{type:"geojson",data:directionData});
+}
+
+if(!map.getLayer("direction-layer")){
+map.addLayer({
+id:"direction-layer",
+type:"line",
+source:"directions",
+paint:{
+"line-color":"#ff0000",
+"line-width":2,
+"line-dasharray":[2,2]
+}
+});
+}
+
+}
+////////////////////////////////////////////////////
+function clearSelection(){
+document.querySelectorAll(".drone").forEach(d=>d.classList.remove("selected"));
+selectedDrone=null;
+selectedMarker=null;
+}
+
+////////////////////////////////////////////////////
+document.querySelectorAll(".icon-btn").forEach(btn=>{
+btn.onclick=()=>{
+deleteMode=false;
+updateDeleteUI();
+
+document.querySelectorAll(".icon-btn").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+currentIcon=btn.dataset.icon;
+};
+});
+
+////////////////////////////////////////////////////
+const deleteBtn=document.getElementById("deleteMode");
+
+deleteBtn.onclick=()=>{
+deleteMode=!deleteMode;
+currentIcon=null;
+document.querySelectorAll(".icon-btn").forEach(b=>b.classList.remove("active"));
+updateDeleteUI();
+};
+
+function updateDeleteUI(){
+deleteBtn.classList.toggle("delete-active",deleteMode);
+}
+
+////////////////////////////////////////////////////
+map.on("click", e => {
+
+////////////////////////////////////////////////////
+// вращение + линия
+////////////////////////////////////////////////////
+if (selectedDrone && selectedMarker && !deleteMode) {
+
+const from = selectedMarker.getLngLat();
+const to = e.lngLat;
+
+const angle = getBearing(from.lat, from.lng, to.lat, to.lng);
+
+selectedDrone.style.transform=`rotate(${angle}deg)`;
+
+const id=selectedDrone.dataset.id;
+
+const line={
+type:"Feature",
+properties:{id},
+geometry:{
+type:"LineString",
+coordinates:[
+[from.lng,from.lat],
+[to.lng,to.lat]
+]
+}
+};
+
+directionData.features=
+directionData.features.filter(f=>f.properties.id!==id);
+
+directionData.features.push(line);
+
+map.getSource("directions").setData(directionData);
+
+return;
+}
+
+////////////////////////////////////////////////////
+if(deleteMode) return;
+
+////////////////////////////////////////////////////
+if(!selectedDrone && currentIcon){
+
+const wrapper=document.createElement("div");
+wrapper.className="marker-wrapper";
+
+const drone=document.createElement("div");
+drone.className="drone";
+drone.style.backgroundImage=`url(${currentIcon})`;
+
+drone.dataset.id="drone_"+Date.now()+Math.random();
+
+wrapper.appendChild(drone);
+
+const marker=new maplibregl.Marker({element:wrapper,draggable:true})
+.setLngLat(e.lngLat)
+.addTo(map);
+////////////////////////////////////////////////////
+// 🟢 начало перетаскивания
+////////////////////////////////////////////////////
+marker.on("dragstart",()=>{
+lastDragLngLat = marker.getLngLat();
+});
+
+////////////////////////////////////////////////////
+// 🟢 во время перетаскивания — поворот + линия
+////////////////////////////////////////////////////
+marker.on("drag",()=>{
+
+const current = marker.getLngLat();
+
+////////////////////////////////////////////////////
+// если есть прошлое положение — считаем угол
+////////////////////////////////////////////////////
+if(lastDragLngLat){
+
+const angle = getBearing(
+lastDragLngLat.lat,
+lastDragLngLat.lng,
+current.lat,
+current.lng
+);
+
+drone.style.transform=`rotate(${angle+90}deg)`
+
+}
+
+////////////////////////////////////////////////////
+// двигаем линию
+////////////////////////////////////////////////////
+const id=drone.dataset.id;
+
+const line = directionData.features.find(f=>f.properties.id===id);
+if(line){
+
+line.geometry.coordinates[0]=[current.lng,current.lat];
+
+map.getSource("directions")?.setData(directionData);
+
+}
+
+lastDragLngLat=current;
+
+});
+wrapper.onclick=(ev)=>{
+ev.stopPropagation();
+
+if(deleteMode){
+wrapper.remove();
+deleteMode=false;
+updateDeleteUI();
+return;
+}
+
+if(selectedDrone===drone){
+clearSelection();
+return;
+}
+
+select(drone,marker);
+};
+
+return;
+}
+
+clearSelection();
+
+});
+
+////////////////////////////////////////////////////
+function select(drone,marker){
+clearSelection();
+drone.classList.add("selected");
+selectedDrone=drone;
+selectedMarker=marker;
+}
+
+////////////////////////////////////////////////////
+document.addEventListener("keydown",(e)=>{
+if(e.key==="Escape"){
+clearSelection();
+}
+});
+
+map.on("dblclick",()=>{
+clearSelection();
+});
+
+////////////////////////////////////////////////////
+function getBearing(lat1,lon1,lat2,lon2){
+
+const toRad=v=>v*Math.PI/180;
+const toDeg=v=>v*180/Math.PI;
+
+const dLon=toRad(lon2-lon1);
+
+const y=Math.sin(dLon)*Math.cos(toRad(lat2));
+const x=
+Math.cos(toRad(lat1))*Math.sin(toRad(lat2))-
+Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(dLon);
+
+let brng=toDeg(Math.atan2(y,x));
+return (brng+360)%360;
+}
+
+////////////////////////////////////////////////////
+document.getElementById("basemap").onchange=(e)=>{
+
+const style = e.target.value==="osm"?osmStyle:terrainStyle;
+
+map.setStyle(style);
+
+map.once("styledata",()=>{
+ensureDirectionLayer();
+});
+
+};
+////////////////////////////////////////////////////
+// WATERMARK
+////////////////////////////////////////////////////
+
+</script>
+</body>
+</html>
