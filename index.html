@@ -194,7 +194,11 @@ const map=new maplibregl.Map({
 container:"map",
 style:osmStyle,
 center:[30.5,50.3],
-zoom:6
+zoom:6,
+
+dragRotate:false,          // ❌ поворот мышкой
+pitchWithRotate:false,     // ❌ наклон
+touchZoomRotate:false      // ❌ поворот пальцами
 });
 
 ////////////////////////////////////////////////////
