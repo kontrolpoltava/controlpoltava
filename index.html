@@ -152,6 +152,7 @@ top:54px;
 <div id="watermark"></div>
 <div id="toolbar">
 <div class="icon-btn" data-icon="shahid-136.png"><img src="shahid-136.png"></div>
+<div class="icon-btn" data-icon="shahid-238.png"><img src="shahid-238.png"></div>
 <div class="icon-btn" data-icon="gerbera.png"><img src="gerbera.png"></div>
 <div class="icon-btn" data-icon="supercam.png"><img src="supercam.png"></div>
 <div class="icon-btn" data-icon="orlan-10.png"><img src="orlan-10.png"></div>
@@ -195,11 +196,10 @@ container:"map",
 style:osmStyle,
 center:[30.5,50.3],
 zoom:6,
-
-dragRotate:false,          // ❌ поворот мышкой
-pitchWithRotate:false,     // ❌ наклон
-touchZoomRotate:false      // ❌ поворот пальцами
+dragRotate:false,
+pitchWithRotate:false
 });
+map.touchZoomRotate.disableRotation(); // ❌ убирает вращение
 
 ////////////////////////////////////////////////////
 map.on("load",()=>{
