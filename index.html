@@ -207,6 +207,9 @@ background-size:140px 90px;
 <div id="darkMode" class="icon-btn">
 <i class="fas fa-moon"></i>
 </div>
+<div id="vectorToggle" class="icon-btn active">
+<i class="fas fa-location-arrow"></i>
+</div>
 <select id="basemap">
 <option value="osm">OpenStreetMap</option>
 <option value="terrain">Google Terrain</option>
@@ -217,7 +220,6 @@ background-size:140px 90px;
 <option value="controlchernihiv">controlchernihiv</option>
 <option value="kyiv_airdef">kyiv_airdef</option>
 </select>
-
 </div>
 <div id="map"></div>
 
@@ -229,7 +231,7 @@ let selectedMarker=null;
 let deleteMode=false;
 let lastDragLngLat=null;
 let directionData={type:"FeatureCollection",features:[]};
-
+let vectorEnabled = true;
 const osmStyle={
 version:8,
 sources:{osm:{type:"raster",tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256}},
@@ -545,6 +547,25 @@ setWatermark(document.getElementById("watermarkSelect").value);
 setWatermark("controlpoltava");
 document.getElementById("watermarkSelect").onchange = (e) => {
   setWatermark(e.target.value);
+};
+const vectorBtn = document.getElementById("vectorToggle");
+
+vectorBtn.onclick = () => {
+
+vectorEnabled = !vectorEnabled;
+
+vectorBtn.classList.toggle("active", vectorEnabled);
+
+const layer = map.getLayer("direction-layer");
+
+if(layer){
+map.setLayoutProperty(
+"direction-layer",
+"visibility",
+vectorEnabled ? "visible" : "none"
+);
+}
+
 };
 </script>
 </body>
