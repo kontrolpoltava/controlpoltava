@@ -355,15 +355,22 @@ background-size:210px 140px;
 /* ══════════════════════════════
    PASSWORD SCREEN
    ══════════════════════════════ */
-const CORRECT_PASSWORD = "1030"; // ← змінити пароль тут
+// SHA-256 хеш пароля (пароль у відкритому вигляді тут НЕ зберігається)
+const PASSWORD_HASH = "2f1987bf98c09d2f5d2a23a6ae29fa53b9aec8f07ed1330bd439122f5a1a2c2c";
 
 const pwOverlay  = document.getElementById("password-overlay");
 const pwInput    = document.getElementById("password-input");
 const pwBtn      = document.getElementById("password-confirm");
 const pwError    = document.getElementById("password-error");
 
-function tryPassword(){
-  if(pwInput.value === CORRECT_PASSWORD){
+async function hashPassword(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+async function tryPassword(){
+  const hash = await hashPassword(pwInput.value);
+  if(hash === PASSWORD_HASH){
     pwOverlay.style.transition = "opacity .3s";
     pwOverlay.style.opacity = "0";
     setTimeout(() => {
@@ -379,7 +386,7 @@ function tryPassword(){
   }
 }
 
-pwBtn.onclick = tryPassword;
+pwBtn.onclick = () => tryPassword();
 pwInput.addEventListener("keydown", e => { if(e.key === "Enter") tryPassword(); });
 
 /* ══════════════════════════════
