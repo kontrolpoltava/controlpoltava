@@ -20,14 +20,94 @@ background:#000;
 --map-tiles-filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.5) brightness(0.7) grayscale(3);
 }
 
+/* ── PASSWORD SCREEN ── */
+#password-overlay{
+position:fixed;inset:0;
+background:#0a0a0a;
+z-index:999999;
+display:flex;align-items:center;justify-content:center;
+}
+#password-box{
+background:#111;
+border:1px solid #2a2a2a;
+border-radius:14px;
+padding:32px 28px 26px;
+width:min(360px, calc(100vw - 32px));
+box-shadow:0 20px 60px rgba(0,0,0,0.9);
+color:#fff;
+text-align:center;
+}
+#password-box .lock-icon{
+font-size:36px;
+color:#00ff88;
+margin-bottom:14px;
+}
+#password-box h2{
+font-size:16px;
+font-weight:700;
+letter-spacing:1px;
+text-transform:uppercase;
+color:#00ff88;
+margin:0 0 6px;
+}
+#password-box p{
+font-size:13px;
+color:#555;
+margin:0 0 22px;
+}
+#password-input{
+width:100%;
+box-sizing:border-box;
+background:#1a1a1a;
+border:1.5px solid #2a2a2a;
+border-radius:8px;
+padding:13px 14px;
+color:#fff;
+font-size:16px;
+letter-spacing:3px;
+outline:none;
+margin-bottom:10px;
+transition:border-color .15s;
+}
+#password-input:focus{ border-color:#00ff88; }
+#password-input.error{ border-color:#ff3333; animation: shake .3s; }
+#password-error{
+font-size:12px;
+color:#ff3333;
+min-height:18px;
+margin-bottom:10px;
+}
+#password-confirm{
+width:100%;
+padding:13px;
+background:#00ff88;
+color:#000;
+border:none;
+border-radius:8px;
+font-weight:700;
+font-size:14px;
+letter-spacing:1px;
+text-transform:uppercase;
+cursor:pointer;
+}
+#password-confirm:hover{ background:#00ffaa; }
+
+@keyframes shake{
+0%,100%{transform:translateX(0)}
+25%{transform:translateX(-6px)}
+75%{transform:translateX(6px)}
+}
+
 /* ── MODAL ── */
 #modal-overlay{
 position:fixed;inset:0;
 background:rgba(0,0,0,0.88);
 backdrop-filter:blur(6px);
 z-index:99999;
-display:flex;align-items:center;justify-content:center;
+display:none;
+align-items:center;justify-content:center;
 }
+#modal-overlay.visible{ display:flex; }
 #modal{
 background:#111;
 border:1px solid #2a2a2a;
@@ -83,6 +163,19 @@ margin-top:4px;
 font-weight:400;
 }
 .wm-option.selected .wm-sub{ color:#00804a; }
+
+/* "no watermark" option spans full width */
+.wm-option.wm-none{
+grid-column: 1 / -1;
+color:#888;
+}
+.wm-option.wm-none.selected{
+border-color:#ffaa00;
+background:#1a1200;
+color:#ffaa00;
+}
+.wm-option.wm-none.selected .wm-sub{ color:#aa7700; }
+
 #modal-confirm{
 width:100%;
 padding:13px;
@@ -174,7 +267,7 @@ background-size:contain;
 background-repeat:no-repeat;
 transform-origin:center center;
 }
-.selected{ outline:2px solid #00ff88; border-radius:50%; }
+.drone.selected{ outline:2px solid #00ff88; border-radius:50%; }
 
 #watermark{
 position:absolute;
@@ -201,7 +294,19 @@ background-size:210px 140px;
 </head>
 <body>
 
-<!-- MODAL -->
+<!-- PASSWORD SCREEN -->
+<div id="password-overlay">
+  <div id="password-box">
+    <div class="lock-icon"><i class="fas fa-lock"></i></div>
+    <h2>Доступ закрито</h2>
+    <p>Введіть пароль для входу</p>
+    <input type="password" id="password-input" placeholder="••••••••" autocomplete="off"/>
+    <div id="password-error"></div>
+    <button id="password-confirm">Увійти</button>
+  </div>
+</div>
+
+<!-- WATERMARK MODAL -->
 <div id="modal-overlay">
   <div id="modal">
     <h2>Вибір каналу</h2>
@@ -211,6 +316,7 @@ background-size:210px 140px;
       <div class="wm-option" data-value="controlchernihiv">controlchernihiv<span class="wm-sub">Контроль Чернігів</span></div>
       <div class="wm-option" data-value="kyiv_airdef">kyiv_airdef<span class="wm-sub">Київ ППО</span></div>
       <div class="wm-option" data-value="Sky_UANews">Sky_UA News<span class="wm-sub">Sky UA News</span></div>
+      <div class="wm-option wm-none" data-value="none"><i class="fas fa-eye-slash" style="margin-right:6px"></i>Без водяного знаку<span class="wm-sub">Без вотермарки</span></div>
     </div>
     <button id="modal-confirm" disabled>Підтвердити</button>
   </div>
@@ -240,12 +346,45 @@ background-size:210px 140px;
 <option value="controlchernihiv">controlchernihiv</option>
 <option value="kyiv_airdef">kyiv_airdef</option>
 <option value="Sky_UANews">Sky_UA News</option>
+<option value="none">— Без вотермарки —</option>
 </select>
 </div>
 <div id="map"></div>
 
 <script>
-/* ── MODAL ── */
+/* ══════════════════════════════
+   PASSWORD SCREEN
+   ══════════════════════════════ */
+const CORRECT_PASSWORD = "1030"; // ← змінити пароль тут
+
+const pwOverlay  = document.getElementById("password-overlay");
+const pwInput    = document.getElementById("password-input");
+const pwBtn      = document.getElementById("password-confirm");
+const pwError    = document.getElementById("password-error");
+
+function tryPassword(){
+  if(pwInput.value === CORRECT_PASSWORD){
+    pwOverlay.style.transition = "opacity .3s";
+    pwOverlay.style.opacity = "0";
+    setTimeout(() => {
+      pwOverlay.style.display = "none";
+      // Show watermark modal after password
+      document.getElementById("modal-overlay").classList.add("visible");
+    }, 300);
+  } else {
+    pwError.textContent = "Невірний пароль. Спробуйте ще раз.";
+    pwInput.classList.add("error");
+    pwInput.value = "";
+    setTimeout(() => pwInput.classList.remove("error"), 400);
+  }
+}
+
+pwBtn.onclick = tryPassword;
+pwInput.addEventListener("keydown", e => { if(e.key === "Enter") tryPassword(); });
+
+/* ══════════════════════════════
+   WATERMARK MODAL
+   ══════════════════════════════ */
 let selectedWM = null;
 document.querySelectorAll(".wm-option").forEach(opt => {
   opt.onclick = () => {
@@ -256,17 +395,20 @@ document.querySelectorAll(".wm-option").forEach(opt => {
   };
 });
 document.getElementById("modal-confirm").onclick = () => {
-  if (!selectedWM) return;
+  if (selectedWM === null) return;
   document.getElementById("watermarkSelect").value = selectedWM;
   setWatermark(selectedWM);
   const ov = document.getElementById("modal-overlay");
   ov.style.transition = "opacity .25s";
   ov.style.opacity = "0";
-  setTimeout(() => ov.style.display = "none", 260);
+  setTimeout(() => {
+    ov.classList.remove("visible");
+    ov.style.opacity = "";
+  }, 260);
 };
 
 /* ════════════════════════════════
-   ОРИГІНАЛЬНА ЛОГІКА — БЕЗ ЗМІН
+   ОРИГІНАЛЬНА ЛОГІКА
    ════════════════════════════════ */
 
 let currentIcon=null;
@@ -352,7 +494,11 @@ Sky_UANews: "Sky_UA News"
 };
 
 function setWatermark(name){
-if(!watermarkTexts[name]) return;
+const wm = document.getElementById("watermark");
+if(name === "none" || !watermarkTexts[name]){
+  wm.style.backgroundImage = "none";
+  return;
+}
 const text = watermarkTexts[name];
 const isDark = document.body.classList.contains("dark-map");
 const fillColor = isDark ? "#ffffff" : "#000000";
@@ -368,7 +514,7 @@ fill-opacity='${fillOpacity}'
 transform='rotate(-20 105 75)'>${text}</text>
 </svg>`;
 const encoded = "data:image/svg+xml," + encodeURIComponent(svg);
-document.getElementById("watermark").style.backgroundImage = `url("${encoded}")`;
+wm.style.backgroundImage = `url("${encoded}")`;
 }
 
 function clearSelection(){
@@ -549,7 +695,7 @@ darkBtn.classList.toggle("active", darkEnabled);
 setWatermark(document.getElementById("watermarkSelect").value);
 };
 
-setWatermark("controlpoltava");
+// Don't set watermark on load — wait for modal selection
 document.getElementById("watermarkSelect").onchange = (e) => {
   setWatermark(e.target.value);
 };
