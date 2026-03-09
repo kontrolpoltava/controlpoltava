@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <title>Контроль Полтава</title>
-
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<style>body{
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+body{
 margin:0;
 font-family:sans-serif;
 overflow:hidden;
@@ -20,6 +20,90 @@ background:#000;
 --map-tiles-filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.5) brightness(0.7) grayscale(3);
 }
 
+/* ── MODAL ── */
+#modal-overlay{
+position:fixed;inset:0;
+background:rgba(0,0,0,0.88);
+backdrop-filter:blur(6px);
+z-index:99999;
+display:flex;align-items:center;justify-content:center;
+}
+#modal{
+background:#111;
+border:1px solid #2a2a2a;
+border-radius:14px;
+padding:28px 24px 22px;
+width:min(380px, calc(100vw - 32px));
+box-shadow:0 20px 60px rgba(0,0,0,0.8);
+color:#fff;
+}
+#modal h2{
+font-size:17px;
+font-weight:700;
+letter-spacing:1px;
+text-transform:uppercase;
+color:#00ff88;
+margin:0 0 6px;
+}
+#modal p{
+font-size:13px;
+color:#666;
+margin:0 0 20px;
+}
+.wm-options{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-bottom:20px;
+}
+.wm-option{
+background:#1a1a1a;
+border:1.5px solid #2a2a2a;
+border-radius:8px;
+padding:12px 10px;
+cursor:pointer;
+text-align:center;
+font-size:13px;
+font-weight:600;
+color:#bbb;
+user-select:none;
+transition:border-color .15s, background .15s, color .15s;
+}
+.wm-option:hover{ background:#222; border-color:#444; }
+.wm-option.selected{
+border-color:#00ff88;
+background:#061a0e;
+color:#00ff88;
+}
+.wm-sub{
+display:block;
+font-size:11px;
+color:#555;
+margin-top:4px;
+font-weight:400;
+}
+.wm-option.selected .wm-sub{ color:#00804a; }
+#modal-confirm{
+width:100%;
+padding:13px;
+background:#00ff88;
+color:#000;
+border:none;
+border-radius:8px;
+font-weight:700;
+font-size:14px;
+letter-spacing:1px;
+text-transform:uppercase;
+cursor:pointer;
+}
+#modal-confirm:hover{ background:#00ffaa; }
+#modal-confirm:disabled{
+background:#2a2a2a;
+color:#555;
+cursor:not-allowed;
+}
+
+/* ── MAP ── */
 #map{
 position:absolute;
 top:var(--toolbar-h);
@@ -28,32 +112,24 @@ width:100%;
 z-index:0;
 }
 
+/* ── TOOLBAR ── */
 #toolbar{
 position:fixed;
-top:0;
-left:0;
-right:0;
+top:0;left:0;right:0;
 height:var(--toolbar-h);
-
 background:#111;
 display:flex;
 align-items:center;
 gap:6px;
 padding:6px;
-
 z-index:9999;
-
 overflow-x:auto;
 overflow-y:hidden;
-
 white-space:nowrap;
 flex-wrap:nowrap;
 -webkit-overflow-scrolling:touch;
 }
-
-#toolbar::-webkit-scrollbar{
-display:none;
-}
+#toolbar::-webkit-scrollbar{ display:none; }
 
 .icon-btn,
 .delete-btn{
@@ -69,27 +145,10 @@ color:#fff;
 flex:0 0 auto;
 box-sizing:border-box;
 }
-
-#toolbar > *{
-min-height:44px;
-flex:0 0 auto;
-}
-
-.icon-btn img{
-max-width:30px;
-max-height:30px;
-pointer-events:none;
-}
-
-.active{
-border:2px solid #00ff88;
-background:#333;
-}
-
-.delete-active{
-border:2px solid #ff3333;
-background:#441111;
-}
+#toolbar > *{ min-height:44px; flex:0 0 auto; }
+.icon-btn img{ max-width:30px; max-height:30px; pointer-events:none; }
+.active{ border:2px solid #00ff88; background:#333; }
+.delete-active{ border:2px solid #ff3333; background:#441111; }
 
 #watermarkSelect,
 #basemap{
@@ -101,32 +160,21 @@ border-radius:10px;
 padding:0 6px;
 flex:0 0 auto;
 box-sizing:border-box;
+border:1px solid #333;
 }
 
 .marker-wrapper{
-width:28px;
-height:28px;
-display:flex;
-align-items:center;
-justify-content:center;
+width:28px;height:28px;
+display:flex;align-items:center;justify-content:center;
 }
-.marker-wrapper.big{
-width:48px;
-height:48px;
-}
+.marker-wrapper.big{ width:48px; height:48px; }
 .drone{
-width:100%;
-height:100%;
+width:100%;height:100%;
 background-size:contain;
 background-repeat:no-repeat;
 transform-origin:center center;
 }
-
-.selected{
-outline:2px solid #00ff88;
-border-radius:50%;
-}
-
+.selected{ outline:2px solid #00ff88; border-radius:50%; }
 
 #watermark{
 position:absolute;
@@ -134,62 +182,39 @@ inset:var(--toolbar-h) 0 0 0;
 z-index:8888;
 pointer-events:none;
 opacity:0.35;
-
 background-repeat:repeat;
 background-size:210px 140px;
 }
 
-.maplibregl-canvas{
-filter:none;
-transition:filter .25s ease;
-}
-
-.dark-map .maplibregl-canvas{
-filter:var(--map-tiles-filter);
-}
-
-.dark-map .drone{
-filter:invert(1) hue-rotate(180deg);
-}
+.maplibregl-canvas{ filter:none; transition:filter .25s ease; }
+.dark-map .maplibregl-canvas{ filter:var(--map-tiles-filter); }
+.dark-map .drone{ filter:invert(1) hue-rotate(180deg); }
 
 @media (max-width:480px){
-
-:root{
---toolbar-h:92px; 
-}
-
-#toolbar{
-height:var(--toolbar-h);
-flex-wrap:wrap;          
-align-content:flex-start;
-gap:4px;
-padding:4px;
-}
-
-.icon-btn,
-.delete-btn{
-min-width:36px;
-min-height:36px;
-}
-
-#basemap,
-#watermarkSelect{
-height:32px;
-font-size:12px;
-}
-
-}
-@media (max-width:480px){
-
-#watermark{
-opacity:0.35;                 
-background-size:140px 90px;
-}
+:root{ --toolbar-h:92px; }
+#toolbar{ height:var(--toolbar-h); flex-wrap:wrap; align-content:flex-start; gap:4px; padding:4px; }
+.icon-btn,.delete-btn{ min-width:36px; min-height:36px; }
+#basemap,#watermarkSelect{ height:32px; font-size:12px; }
+#watermark{ opacity:0.35; background-size:140px 90px; }
 }
 </style>
 </head>
-
 <body>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>Вибір каналу</h2>
+    <p>Оберіть водяний знак перед початком роботи</p>
+    <div class="wm-options">
+      <div class="wm-option" data-value="controlpoltava">controlpoltava<span class="wm-sub">Контроль Полтава</span></div>
+      <div class="wm-option" data-value="controlchernihiv">controlchernihiv<span class="wm-sub">Контроль Чернігів</span></div>
+      <div class="wm-option" data-value="kyiv_airdef">kyiv_airdef<span class="wm-sub">Київ ППО</span></div>
+      <div class="wm-option" data-value="Sky_UANews">Sky_UA News<span class="wm-sub">Sky UA News</span></div>
+    </div>
+    <button id="modal-confirm" disabled>Підтвердити</button>
+  </div>
+</div>
 
 <div id="watermark"></div>
 <div id="toolbar">
@@ -202,19 +227,14 @@ background-size:140px 90px;
 <div class="icon-btn" data-icon="su-30.png"><img src="su-30.png"></div>
 <div class="icon-btn" data-icon="isk-k.png"><img src="isk-k.png"></div>
 <div class="icon-btn" data-icon="explosion.png"><img src="explosion.png"></div>
-
 <div id="deleteMode" class="delete-btn"><i class="fas fa-trash-alt"></i></div>
-<div id="darkMode" class="icon-btn">
-<i class="fas fa-moon"></i>
-</div>
-<div id="vectorToggle" class="icon-btn active">
-<i class="fas fa-location-arrow"></i>
-</div>
+<div id="darkMode" class="icon-btn"><i class="fas fa-moon"></i></div>
+<div id="vectorToggle" class="icon-btn active"><i class="fas fa-location-arrow"></i></div>
 <select id="basemap">
 <option value="osm">OpenStreetMap</option>
 <option value="terrain">Google Terrain</option>
+<option value="satellite">Google Satellite</option>
 </select>
-
 <select id="watermarkSelect">
 <option value="controlpoltava">controlpoltava</option>
 <option value="controlchernihiv">controlchernihiv</option>
@@ -225,6 +245,29 @@ background-size:140px 90px;
 <div id="map"></div>
 
 <script>
+/* ── MODAL ── */
+let selectedWM = null;
+document.querySelectorAll(".wm-option").forEach(opt => {
+  opt.onclick = () => {
+    document.querySelectorAll(".wm-option").forEach(o => o.classList.remove("selected"));
+    opt.classList.add("selected");
+    selectedWM = opt.dataset.value;
+    document.getElementById("modal-confirm").disabled = false;
+  };
+});
+document.getElementById("modal-confirm").onclick = () => {
+  if (!selectedWM) return;
+  document.getElementById("watermarkSelect").value = selectedWM;
+  setWatermark(selectedWM);
+  const ov = document.getElementById("modal-overlay");
+  ov.style.transition = "opacity .25s";
+  ov.style.opacity = "0";
+  setTimeout(() => ov.style.display = "none", 260);
+};
+
+/* ════════════════════════════════
+   ОРИГІНАЛЬНА ЛОГІКА — БЕЗ ЗМІН
+   ════════════════════════════════ */
 
 let currentIcon=null;
 let selectedDrone=null;
@@ -233,6 +276,7 @@ let deleteMode=false;
 let lastDragLngLat=null;
 let directionData={type:"FeatureCollection",features:[]};
 let vectorEnabled = true;
+
 const osmStyle={
 version:8,
 sources:{osm:{type:"raster",tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256}},
@@ -245,6 +289,18 @@ sources:{terrain:{type:"raster",tiles:["https://mt0.google.com/vt/lyrs=p&hl=uk&x
 layers:[{id:"terrain",type:"raster",source:"terrain"}]
 };
 
+const satelliteStyle={
+version:8,
+sources:{
+satellite:{type:"raster",tiles:["https://mt0.google.com/vt/lyrs=s&hl=uk&x={x}&y={y}&z={z}"],tileSize:256},
+labels:{type:"raster",tiles:["https://mt0.google.com/vt/lyrs=h&hl=uk&x={x}&y={y}&z={z}"],tileSize:256}
+},
+layers:[
+{id:"satellite",type:"raster",source:"satellite"},
+{id:"labels",type:"raster",source:"labels"}
+]
+};
+
 const map=new maplibregl.Map({
 container:"map",
 style:osmStyle,
@@ -253,13 +309,11 @@ zoom:6,
 dragRotate:false,
 pitchWithRotate:false
 });
-map.touchZoomRotate.disableRotation(); 
+map.touchZoomRotate.disableRotation();
 
 map.on("load",()=>{
 ensureDirectionLayer();
-
 map.addSource("directions",{type:"geojson",data:directionData});
-
 map.addLayer({
 id:"direction-layer",
 type:"line",
@@ -270,14 +324,12 @@ paint:{
 "line-dasharray":[2,2]
 }
 });
-
 });
-function ensureDirectionLayer(){
 
+function ensureDirectionLayer(){
 if(!map.getSource("directions")){
 map.addSource("directions",{type:"geojson",data:directionData});
 }
-
 if(!map.getLayer("direction-layer")){
 map.addLayer({
 id:"direction-layer",
@@ -290,25 +342,21 @@ paint:{
 }
 });
 }
-
 }
+
 const watermarkTexts = {
 controlpoltava: "controlpoltava",
 controlchernihiv: "controlchernihiv",
 kyiv_airdef: "kyiv_airdef",
 Sky_UANews: "Sky_UA News"
 };
+
 function setWatermark(name){
-
 if(!watermarkTexts[name]) return;
-
 const text = watermarkTexts[name];
-
 const isDark = document.body.classList.contains("dark-map");
-
 const fillColor = isDark ? "#ffffff" : "#000000";
 const fillOpacity = isDark ? "0.28" : "0.45";
-
 const svg = `
 <svg xmlns='http://www.w3.org/2000/svg' width='210' height='140'>
 <text x='105' y='75'
@@ -319,12 +367,10 @@ fill='${fillColor}'
 fill-opacity='${fillOpacity}'
 transform='rotate(-20 105 75)'>${text}</text>
 </svg>`;
-
 const encoded = "data:image/svg+xml," + encodeURIComponent(svg);
-
-document.getElementById("watermark").style.backgroundImage =
-`url("${encoded}")`;
+document.getElementById("watermark").style.backgroundImage = `url("${encoded}")`;
 }
+
 function clearSelection(){
 document.querySelectorAll(".drone").forEach(d=>d.classList.remove("selected"));
 selectedDrone=null;
@@ -335,7 +381,6 @@ document.querySelectorAll(".icon-btn").forEach(btn=>{
 btn.onclick=()=>{
 deleteMode=false;
 updateDeleteUI();
-
 document.querySelectorAll(".icon-btn").forEach(b=>b.classList.remove("active"));
 btn.classList.add("active");
 currentIcon=btn.dataset.icon;
@@ -343,7 +388,6 @@ currentIcon=btn.dataset.icon;
 });
 
 const deleteBtn=document.getElementById("deleteMode");
-
 deleteBtn.onclick=()=>{
 deleteMode=!deleteMode;
 currentIcon=null;
@@ -354,7 +398,6 @@ updateDeleteUI();
 function updateDeleteUI(){
 deleteBtn.classList.toggle("delete-active",deleteMode);
 }
-
 
 map.on("click", e => {
 
@@ -367,13 +410,9 @@ if (
 
 const from = selectedMarker.getLngLat();
 const to = e.lngLat;
-
 const angle = getBearing(from.lat, from.lng, to.lat, to.lng);
-
 selectedDrone.style.transform=`rotate(${angle}deg)`;
-
 const id=selectedDrone.dataset.id;
-
 const line={
 type:"Feature",
 properties:{id},
@@ -385,17 +424,12 @@ coordinates:[
 ]
 }
 };
-
 directionData.features=
 directionData.features.filter(f=>f.properties.id!==id);
-
 directionData.features.push(line);
-
 map.getSource("directions").setData(directionData);
-
 return;
 }
-
 
 if(deleteMode) return;
 
@@ -421,54 +455,36 @@ marker.on("dragstart",()=>{
 lastDragLngLat = marker.getLngLat();
 });
 
-
 marker.on("drag",()=>{
-
 const current = marker.getLngLat();
-
-
 if(lastDragLngLat){
-
 const angle = getBearing(
 lastDragLngLat.lat,
 lastDragLngLat.lng,
 current.lat,
 current.lng
 );
-
 drone.style.transform=`rotate(${angle+90}deg)`
-
 }
-
 const id=drone.dataset.id;
-
 const line = directionData.features.find(f=>f.properties.id===id);
 if(line){
-
 line.geometry.coordinates[0]=[current.lng,current.lat];
-
 map.getSource("directions")?.setData(directionData);
-
 }
-
 lastDragLngLat=current;
-
 });
+
 wrapper.onclick=(ev)=>{
 ev.stopPropagation();
-
 if(deleteMode){
-
 const id = drone.dataset.id;
-
 directionData.features =
 directionData.features.filter(f => f.properties.id !== id);
-
 const src = map.getSource("directions");
 if(src){
 src.setData(directionData);
 }
-
 wrapper.remove();
 return;
 }
@@ -476,7 +492,6 @@ if(selectedDrone===drone){
 clearSelection();
 return;
 }
-
 select(drone,marker);
 };
 
@@ -505,44 +520,32 @@ clearSelection();
 });
 
 function getBearing(lat1,lon1,lat2,lon2){
-
 const toRad=v=>v*Math.PI/180;
 const toDeg=v=>v*180/Math.PI;
-
 const dLon=toRad(lon2-lon1);
-
 const y=Math.sin(dLon)*Math.cos(toRad(lat2));
 const x=
 Math.cos(toRad(lat1))*Math.sin(toRad(lat2))-
 Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(dLon);
-
 let brng=toDeg(Math.atan2(y,x));
 return (brng+360)%360;
 }
 
 document.getElementById("basemap").onchange=(e)=>{
-
-const style = e.target.value==="osm"?osmStyle:terrainStyle;
-
+const styles={osm:osmStyle,terrain:terrainStyle,satellite:satelliteStyle};
+const style = styles[e.target.value] || osmStyle;
 map.setStyle(style);
-
 map.once("styledata",()=>{
 ensureDirectionLayer();
 });
-
 };
 
 const darkBtn = document.getElementById("darkMode");
 let darkEnabled = false;
-
 darkBtn.onclick = () => {
-
 darkEnabled = !darkEnabled;
-
 document.body.classList.toggle("dark-map", darkEnabled);
-
 darkBtn.classList.toggle("active", darkEnabled);
-
 setWatermark(document.getElementById("watermarkSelect").value);
 };
 
@@ -550,16 +553,12 @@ setWatermark("controlpoltava");
 document.getElementById("watermarkSelect").onchange = (e) => {
   setWatermark(e.target.value);
 };
+
 const vectorBtn = document.getElementById("vectorToggle");
-
 vectorBtn.onclick = () => {
-
 vectorEnabled = !vectorEnabled;
-
 vectorBtn.classList.toggle("active", vectorEnabled);
-
 const layer = map.getLayer("direction-layer");
-
 if(layer){
 map.setLayoutProperty(
 "direction-layer",
@@ -567,7 +566,6 @@ map.setLayoutProperty(
 vectorEnabled ? "visible" : "none"
 );
 }
-
 };
 </script>
 </body>
