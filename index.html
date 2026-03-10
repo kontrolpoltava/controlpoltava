@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="utf-8"/>
 <title>Контроль Полтава</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -17,6 +18,7 @@ background:#000;
 
 :root{
 --toolbar-h:58px;
+--stats-h:0px;
 --map-tiles-filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.5) brightness(0.7) grayscale(3);
 }
 
@@ -43,7 +45,7 @@ color:#00ff88;
 margin-bottom:14px;
 }
 #password-box h2{
-font-size:16px;
+font-size:22px;
 font-weight:700;
 letter-spacing:1px;
 text-transform:uppercase;
@@ -63,7 +65,7 @@ border:1.5px solid #2a2a2a;
 border-radius:8px;
 padding:13px 14px;
 color:#fff;
-font-size:16px;
+font-size:22px;
 letter-spacing:3px;
 outline:none;
 margin-bottom:10px;
@@ -113,7 +115,7 @@ background:#111;
 border:1px solid #2a2a2a;
 border-radius:14px;
 padding:28px 24px 22px;
-width:min(380px, calc(100vw - 32px));
+width:min(400px, calc(100vw - 32px));
 box-shadow:0 20px 60px rgba(0,0,0,0.8);
 color:#fff;
 }
@@ -128,13 +130,13 @@ margin:0 0 6px;
 #modal p{
 font-size:13px;
 color:#666;
-margin:0 0 20px;
+margin:0 0 14px;
 }
 .wm-options{
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:8px;
-margin-bottom:20px;
+margin-bottom:14px;
 }
 .wm-option{
 background:#1a1a1a;
@@ -164,7 +166,6 @@ font-weight:400;
 }
 .wm-option.selected .wm-sub{ color:#00804a; }
 
-/* "no watermark" option spans full width */
 .wm-option.wm-none{
 grid-column: 1 / -1;
 color:#888;
@@ -175,6 +176,31 @@ background:#1a1200;
 color:#ffaa00;
 }
 .wm-option.wm-none.selected .wm-sub{ color:#aa7700; }
+
+/* Custom watermark input */
+#custom-wm-wrap{
+margin-bottom:14px;
+}
+#custom-wm-wrap label{
+font-size:12px;
+color:#666;
+display:block;
+margin-bottom:6px;
+}
+#customWmInput{
+width:100%;
+box-sizing:border-box;
+background:#1a1a1a;
+border:1.5px solid #2a2a2a;
+border-radius:8px;
+padding:10px 12px;
+color:#fff;
+font-size:14px;
+outline:none;
+transition:border-color .15s;
+}
+#customWmInput:focus{ border-color:#00ff88; }
+#customWmInput::placeholder{ color:#444; }
 
 #modal-confirm{
 width:100%;
@@ -196,13 +222,106 @@ color:#555;
 cursor:not-allowed;
 }
 
+/* ── STATS PANEL ── */
+#stats-panel{
+position:fixed;
+top:calc(var(--toolbar-h) + 6px);
+left:10px;
+z-index:9998;
+display:flex;
+align-items:center;
+justify-content:flex-start;
+padding:0;
+pointer-events:none;
+transition:transform .25s ease, opacity .25s ease;
+}
+#stats-panel.hidden{
+transform:translateY(-200%);
+opacity:0;
+}
+
+#stats-pill{
+display:inline-flex;
+align-items:center;
+gap:0;
+background:rgba(40,42,46,0.93);
+backdrop-filter:blur(10px);
+border-radius:12px;
+padding:0 20px;
+height:44px;
+font-size:22px;
+font-weight:700;
+color:#fff;
+white-space:nowrap;
+overflow:hidden;
+max-width:calc(100vw - 60px);
+overflow-x:auto;
+pointer-events:auto;
+box-shadow:0 3px 16px rgba(0,0,0,0.6);
+letter-spacing:0.2px;
+}
+#stats-pill::-webkit-scrollbar{ display:none; }
+
+.sp-clock{
+display:flex;align-items:center;gap:7px;
+color:#fff;
+font-size:17px;
+font-weight:800;
+letter-spacing:1px;
+padding-right:14px;
+border-right:1px solid rgba(255,255,255,0.18);
+margin-right:12px;
+flex:0 0 auto;
+}
+.sp-clock i{ font-size:14px; color:rgba(255,255,255,0.55); }
+
+.sp-dot{
+display:inline-block;
+width:6px;height:6px;
+border-radius:50%;
+background:#00ff88;
+margin:0 8px;
+flex:0 0 auto;
+animation:blink 1.5s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+.sp-text{
+color:#fff;
+font-size:14px;
+font-weight:600;
+flex:0 0 auto;
+}
+.sp-sep{
+color:rgba(255,255,255,0.3);
+margin:0 4px;
+}
+
+#stats-toggle-btn{
+position:fixed;
+top:calc(var(--toolbar-h) + 6px);
+right:8px;
+z-index:9001;
+background:#1a1a1a;
+border:1px solid #2a2a2a;
+border-radius:8px;
+width:28px;height:28px;
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;
+color:#888;
+font-size:12px;
+transition:all .2s;
+}
+#stats-toggle-btn:hover{ color:#fff; border-color:#444; }
+
 /* ── MAP ── */
 #map{
 position:absolute;
-top:var(--toolbar-h);
+top:calc(var(--toolbar-h) + var(--stats-h));
 bottom:0;
 width:100%;
 z-index:0;
+transition:top .25s ease;
 }
 
 /* ── TOOLBAR ── */
@@ -244,8 +363,9 @@ box-sizing:border-box;
 .delete-active{ border:2px solid #ff3333; background:#441111; }
 
 #watermarkSelect,
-#basemap{
-margin-left:6px;
+#basemap,
+#markerScale{
+margin-left:4px;
 height:44px;
 background:#000;
 color:#fff;
@@ -254,15 +374,17 @@ padding:0 6px;
 flex:0 0 auto;
 box-sizing:border-box;
 border:1px solid #333;
+font-size:13px;
+}
+#markerScale{
+min-width:70px;
 }
 
 .marker-wrapper{
-width:28px;height:28px;
 display:flex;align-items:center;justify-content:center;
 }
 .marker-wrapper.big{ width:48px; height:48px; }
 .drone{
-width:100%;height:100%;
 background-size:contain;
 background-repeat:no-repeat;
 transform-origin:center center;
@@ -279,6 +401,52 @@ background-repeat:repeat;
 background-size:210px 140px;
 }
 
+/* ── BOTTOM CREDIT ── */
+#bottom-credit{
+position:fixed;
+bottom:12px;
+left:50%;
+transform:translateX(-50%);
+z-index:8900;
+pointer-events:none;
+font-size:13px;
+font-weight:500;
+font-family:'Arial',sans-serif;
+color:rgba(255,255,255,0.75);
+letter-spacing:1.5px;
+white-space:nowrap;
+text-transform:lowercase;
+background:rgba(0,0,0,0.35);
+backdrop-filter:blur(6px);
+padding:4px 14px;
+border-radius:20px;
+border:1px solid rgba(255,255,255,0.12);
+text-shadow:0 1px 4px rgba(0,0,0,0.6);
+}
+
+/* ── SCREENSHOT TOAST ── */
+#screenshot-toast{
+position:fixed;
+bottom:36px;
+left:50%;
+transform:translateX(-50%) translateY(20px);
+background:#00ff88;
+color:#000;
+font-size:13px;
+font-weight:700;
+border-radius:20px;
+padding:8px 20px;
+z-index:99000;
+opacity:0;
+pointer-events:none;
+transition:opacity .3s, transform .3s;
+white-space:nowrap;
+}
+#screenshot-toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(0);
+}
+
 .maplibregl-canvas{ filter:none; transition:filter .25s ease; }
 .dark-map .maplibregl-canvas{ filter:var(--map-tiles-filter); }
 .dark-map .drone{ filter:invert(1) hue-rotate(180deg); }
@@ -287,7 +455,7 @@ background-size:210px 140px;
 :root{ --toolbar-h:92px; }
 #toolbar{ height:var(--toolbar-h); flex-wrap:wrap; align-content:flex-start; gap:4px; padding:4px; }
 .icon-btn,.delete-btn{ min-width:36px; min-height:36px; }
-#basemap,#watermarkSelect{ height:32px; font-size:12px; }
+#basemap,#watermarkSelect,#markerScale{ height:32px; font-size:12px; }
 #watermark{ opacity:0.35; background-size:140px 90px; }
 }
 </style>
@@ -309,20 +477,35 @@ background-size:210px 140px;
 <!-- WATERMARK MODAL -->
 <div id="modal-overlay">
   <div id="modal">
-    <h2>Вибір каналу</h2>
-    <p>Оберіть водяний знак перед початком роботи</p>
+    <h2>Вибір вотермарки</h2>
+    <p>Оберіть або введіть власний водяний знак</p>
     <div class="wm-options">
-      <div class="wm-option" data-value="controlpoltava">controlpoltava<span class="wm-sub">Контроль Полтава</span></div>
-      <div class="wm-option" data-value="controlchernihiv">controlchernihiv<span class="wm-sub">Контроль Чернігів</span></div>
-      <div class="wm-option" data-value="kyiv_airdef">kyiv_airdef<span class="wm-sub">Київ ППО</span></div>
-      <div class="wm-option" data-value="Sky_UANews">Sky_UA News<span class="wm-sub">Sky UA News</span></div>
+      <div class="wm-option" data-value="Ukrainian_Intelligence">@Ukrainian_Intelligence<span class="wm-sub">Укр. розвідка</span></div>
+      <div class="wm-option" data-value="controlpoltava">@controlpoltava<span class="wm-sub">Контроль Полтава</span></div>
+      <div class="wm-option" data-value="controlchernihiv">@controlchernihiv<span class="wm-sub">Контроль Чернігів</span></div>
+      <div class="wm-option" data-value="kyiv_airdef">@kyiv_airdef<span class="wm-sub">Київ ППО</span></div>
+      <div class="wm-option" data-value="Sky_UANews">@Sky_UA News<span class="wm-sub">Sky UA News</span></div>
       <div class="wm-option wm-none" data-value="none"><i class="fas fa-eye-slash" style="margin-right:6px"></i>Без водяного знаку<span class="wm-sub">Без вотермарки</span></div>
+    </div>
+    <div id="custom-wm-wrap">
+      <label><i class="fas fa-pen" style="margin-right:5px;color:#00ff88"></i>Або введіть власну вотермарку:</label>
+      <input type="text" id="customWmInput" placeholder="напр. @my_channel або будь-який текст"/>
     </div>
     <button id="modal-confirm" disabled>Підтвердити</button>
   </div>
 </div>
 
+<!-- STATS PANEL -->
+<div id="stats-panel">
+  <div id="stats-pill">
+    <div class="sp-clock"><i class="fas fa-clock"></i><span id="clock-time">00:00</span></div>
+    <span id="stats-text" class="sp-text">Цілей 0</span>
+  </div>
+</div>
+<div id="stats-toggle-btn" title="Показати/приховати панель"><i class="fas fa-chevron-up"></i></div>
+
 <div id="watermark"></div>
+
 <div id="toolbar">
 <div class="icon-btn" data-icon="shahid-136.png"><img src="shahid-136.png"></div>
 <div class="icon-btn" data-icon="shahid-238.png"><img src="shahid-238.png"></div>
@@ -336,26 +519,72 @@ background-size:210px 140px;
 <div id="deleteMode" class="delete-btn"><i class="fas fa-trash-alt"></i></div>
 <div id="darkMode" class="icon-btn"><i class="fas fa-moon"></i></div>
 <div id="vectorToggle" class="icon-btn active"><i class="fas fa-location-arrow"></i></div>
+<div id="screenshotBtn" class="icon-btn" title="Зберегти скрін"><i class="fas fa-camera"></i></div>
+<div id="wmBtn" class="icon-btn" title="Змінити вотермарку"><i class="fas fa-tint"></i></div>
+<select id="markerScale" title="Масштаб цілей">
+  <option value="0.5">50%</option>
+  <option value="0.75">75%</option>
+  <option value="1" selected>100%</option>
+  <option value="1.4">140%</option>
+  <option value="1.8">180%</option>
+  <option value="2.4">240%</option>
+</select>
 <select id="basemap">
 <option value="osm">OpenStreetMap</option>
 <option value="terrain">Google Terrain</option>
 <option value="satellite">Google Satellite</option>
 </select>
 <select id="watermarkSelect">
-<option value="controlpoltava">controlpoltava</option>
-<option value="controlchernihiv">controlchernihiv</option>
-<option value="kyiv_airdef">kyiv_airdef</option>
-<option value="Sky_UANews">Sky_UA News</option>
-<option value="none">— Без вотермарки —</option>
+  <option value="Ukrainian_Intelligence">@Ukrainian_Intelligence</option>
+  <option value="controlpoltava">@controlpoltava</option>
+  <option value="controlchernihiv">@controlchernihiv</option>
+  <option value="kyiv_airdef">@kyiv_airdef</option>
+  <option value="Sky_UANews">@Sky_UA News</option>
+  <option value="none">— Без вотермарки —</option>
 </select>
 </div>
+
 <div id="map"></div>
+
+<!-- Bottom credit -->
+<div id="bottom-credit">ідея · @skykh_info</div>
+
+<!-- Screenshot toast -->
+<div id="screenshot-toast">📸 Скрін збережено!</div>
 
 <script>
 /* ══════════════════════════════
+   ICON LABELS — for stats panel
+   ══════════════════════════════ */
+const ICON_LABELS = {
+  "shahid-136.png":  {label:"Шахедів"},
+  "shahid-238.png":  {label:"Шахед-238"},
+  "gerbera.png":     {label:"Гербера"},
+  "supercam.png":    {label:"Суперкам"},
+  "orlan-10.png":    {label:"Орлан-10"},
+  "zala.png":        {label:"Зала"},
+  "su-30.png":       {label:"Су-30"},
+  "isk-k.png":       {label:"Іскандер-К"},
+  "explosion.png":   {label:"Вибухів"},
+};
+
+// Preload all icons as blob URLs on startup (avoids CORS taint in canvas)
+const ICON_BLOB_CACHE = {};
+(async () => {
+  const allIcons = Object.keys(ICON_LABELS);
+  await Promise.all(allIcons.map(async src => {
+    try {
+      const r = await fetch(src);
+      if (!r.ok) return;
+      const blob = await r.blob();
+      ICON_BLOB_CACHE[src] = URL.createObjectURL(blob);
+    } catch(_) {}
+  }));
+})();
+
+/* ══════════════════════════════
    PASSWORD SCREEN
    ══════════════════════════════ */
-// SHA-256 хеш пароля (пароль у відкритому вигляді тут НЕ зберігається)
 const PASSWORD_HASH = "2f1987bf98c09d2f5d2a23a6ae29fa53b9aec8f07ed1330bd439122f5a1a2c2c";
 
 const pwOverlay  = document.getElementById("password-overlay");
@@ -375,7 +604,6 @@ async function tryPassword(){
     pwOverlay.style.opacity = "0";
     setTimeout(() => {
       pwOverlay.style.display = "none";
-      // Show watermark modal after password
       document.getElementById("modal-overlay").classList.add("visible");
     }, 300);
   } else {
@@ -393,18 +621,53 @@ pwInput.addEventListener("keydown", e => { if(e.key === "Enter") tryPassword(); 
    WATERMARK MODAL
    ══════════════════════════════ */
 let selectedWM = null;
+
 document.querySelectorAll(".wm-option").forEach(opt => {
   opt.onclick = () => {
     document.querySelectorAll(".wm-option").forEach(o => o.classList.remove("selected"));
     opt.classList.add("selected");
     selectedWM = opt.dataset.value;
+    document.getElementById("customWmInput").value = "";
     document.getElementById("modal-confirm").disabled = false;
   };
 });
+
+// Custom watermark input — typing clears preset selection
+const customWmInput = document.getElementById("customWmInput");
+customWmInput.addEventListener("input", () => {
+  const val = customWmInput.value.trim();
+  if(val){
+    document.querySelectorAll(".wm-option").forEach(o => o.classList.remove("selected"));
+    selectedWM = "__custom__";
+    document.getElementById("modal-confirm").disabled = false;
+  } else {
+    if(!document.querySelector(".wm-option.selected")){
+      document.getElementById("modal-confirm").disabled = true;
+      selectedWM = null;
+    }
+  }
+});
+
 document.getElementById("modal-confirm").onclick = () => {
   if (selectedWM === null) return;
-  document.getElementById("watermarkSelect").value = selectedWM;
-  setWatermark(selectedWM);
+  let wmValue = selectedWM;
+  if(selectedWM === "__custom__"){
+    const custom = customWmInput.value.trim();
+    if(!custom) return;
+    wmValue = "__custom__:" + custom;
+  }
+  // Set select box (best-effort)
+  const sel = document.getElementById("watermarkSelect");
+  if(wmValue.startsWith("__custom__:")){
+    // add option if not exists
+    let opt = sel.querySelector('[value="__custom__"]');
+    if(!opt){ opt = document.createElement("option"); opt.value="__custom__"; sel.appendChild(opt); }
+    opt.textContent = customWmInput.value.trim();
+    sel.value = "__custom__";
+  } else {
+    sel.value = wmValue;
+  }
+  setWatermark(wmValue);
   const ov = document.getElementById("modal-overlay");
   ov.style.transition = "opacity .25s";
   ov.style.opacity = "0";
@@ -414,9 +677,66 @@ document.getElementById("modal-confirm").onclick = () => {
   }, 260);
 };
 
-/* ════════════════════════════════
+/* ══════════════════════════════
+   STATS PANEL
+   ══════════════════════════════ */
+let markerCounts = {}; // { "shahid-136.png": 2, ... }
+let statsVisible = true;
+const STATS_H = 38; // px
+
+// ── CLOCK ──
+function updateClock(){
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,"0");
+  const m = String(now.getMinutes()).padStart(2,"0");
+  document.getElementById("clock-time").textContent = h+":"+m;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+function updateStats(){
+  const pill = document.getElementById("stats-pill");
+  if(!pill) return;
+  const clockHtml = pill.querySelector(".sp-clock") ? pill.querySelector(".sp-clock").outerHTML : "";
+
+  let total = 0;
+  const parts = [];
+  Object.entries(markerCounts).forEach(([icon, cnt]) => {
+    if(cnt <= 0) return;
+    total += cnt;
+    const info = ICON_LABELS[icon] || {label: icon.replace(".png","")};
+    parts.push(info.label + ": " + cnt);
+  });
+
+  let bodyHtml = "";
+  if(total > 0){
+    bodyHtml = `<span class="sp-dot"></span><span class="sp-text">Цілей ${total}: ${parts.join(" • ")}</span>`;
+  } else {
+    bodyHtml = '<span class="sp-dot" style="background:#555;animation:none"></span><span class="sp-text" style="color:#888">Цілей 0</span>';
+  }
+  pill.innerHTML = clockHtml + bodyHtml;
+}
+function setStatsPanelHeight(){
+  // Panel now overlays map — no need to push map down
+  document.getElementById("map").style.top = "var(--toolbar-h)";
+  document.getElementById("watermark").style.top = "var(--toolbar-h)";
+}
+
+// Toggle
+const statsToggleBtn = document.getElementById("stats-toggle-btn");
+statsToggleBtn.onclick = () => {
+  statsVisible = !statsVisible;
+  document.getElementById("stats-panel").classList.toggle("hidden", !statsVisible);
+  statsToggleBtn.querySelector("i").className = statsVisible ? "fas fa-chevron-up" : "fas fa-chevron-down";
+  statsToggleBtn.title = statsVisible ? "Приховати панель" : "Показати панель";
+  setStatsPanelHeight();
+};
+setStatsPanelHeight();
+updateStats();
+
+/* ══════════════════════════════
    ОРИГІНАЛЬНА ЛОГІКА
-   ════════════════════════════════ */
+   ══════════════════════════════ */
 
 let currentIcon=null;
 let selectedDrone=null;
@@ -425,6 +745,7 @@ let deleteMode=false;
 let lastDragLngLat=null;
 let directionData={type:"FeatureCollection",features:[]};
 let vectorEnabled = true;
+let markerScale = 1; // current scale factor
 
 const osmStyle={
 version:8,
@@ -456,7 +777,14 @@ style:osmStyle,
 center:[30.5,50.3],
 zoom:6,
 dragRotate:false,
-pitchWithRotate:false
+pitchWithRotate:false,
+preserveDrawingBuffer:true,
+transformRequest:(url, resourceType) => {
+  // Ask tiles with crossorigin so WebGL doesn't taint the canvas
+  if(resourceType === 'Tile'){
+    return { url, credentials: 'omit' };
+  }
+}
 });
 map.touchZoomRotate.disableRotation();
 
@@ -493,35 +821,50 @@ paint:{
 }
 }
 
+/* ── WATERMARK ── */
 const watermarkTexts = {
-controlpoltava: "controlpoltava",
-controlchernihiv: "controlchernihiv",
-kyiv_airdef: "kyiv_airdef",
-Sky_UANews: "Sky_UA News"
+Ukrainian_Intelligence: "@Ukrainian_Intelligence",
+controlpoltava: "@controlpoltava",
+controlchernihiv: "@controlchernihiv",
+kyiv_airdef: "@kyiv_airdef",
+Sky_UANews: "@Sky_UA News"
 };
 
 function setWatermark(name){
 const wm = document.getElementById("watermark");
-if(name === "none" || !watermarkTexts[name]){
+let text = null;
+if(name && name.startsWith("__custom__:")){
+  text = name.replace("__custom__:", "");
+} else {
+  text = watermarkTexts[name] || null;
+}
+if(!text || name === "none"){
   wm.style.backgroundImage = "none";
+  wm.style.backgroundSize  = "";
   return;
 }
-const text = watermarkTexts[name];
 const isDark = document.body.classList.contains("dark-map");
-const fillColor = isDark ? "#ffffff" : "#000000";
+const fillColor   = isDark ? "#ffffff" : "#000000";
 const fillOpacity = isDark ? "0.28" : "0.45";
-const svg = `
-<svg xmlns='http://www.w3.org/2000/svg' width='210' height='140'>
-<text x='105' y='75'
+// Scale tile & font based on text length so nothing gets clipped
+const charCount = text.length;
+const tileW  = Math.max(220, charCount * 13);
+const tileH  = Math.round(tileW * 0.65);
+const cx     = tileW / 2;
+const cy     = tileH / 2;
+const fSize  = Math.max(16, Math.min(26, Math.floor(tileW / charCount * 1.55)));
+const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${tileW}' height='${tileH}'>
+<text x='${cx}' y='${cy}'
 text-anchor='middle'
 font-family='Arial'
-font-size='26'
+font-size='${fSize}'
 fill='${fillColor}'
 fill-opacity='${fillOpacity}'
-transform='rotate(-20 105 75)'>${text}</text>
+transform='rotate(-20 ${cx} ${cy})'>${text}</text>
 </svg>`;
 const encoded = "data:image/svg+xml," + encodeURIComponent(svg);
 wm.style.backgroundImage = `url("${encoded}")`;
+wm.style.backgroundSize  = `${tileW}px ${tileH}px`;
 }
 
 function clearSelection(){
@@ -530,7 +873,33 @@ selectedDrone=null;
 selectedMarker=null;
 }
 
+/* ── MARKER SCALE ── */
+function getMarkerSize(icon){
+  const base = (icon === "su-30.png") ? 48 : 28;
+  return Math.round(base * markerScale);
+}
+
+function applyScaleToAll(){
+  document.querySelectorAll(".marker-wrapper").forEach(wrapper => {
+    const drone = wrapper.querySelector(".drone");
+    if(!drone) return;
+    const icon = drone.dataset.icon;
+    const sz = getMarkerSize(icon);
+    wrapper.style.width = sz+"px";
+    wrapper.style.height = sz+"px";
+    drone.style.width = "100%";
+    drone.style.height = "100%";
+  });
+}
+
+document.getElementById("markerScale").onchange = (e) => {
+  markerScale = parseFloat(e.target.value);
+  applyScaleToAll();
+};
+
+/* ── ICON BUTTONS ── */
 document.querySelectorAll(".icon-btn").forEach(btn=>{
+if(!btn.dataset.icon) return;
 btn.onclick=()=>{
 deleteMode=false;
 updateDeleteUI();
@@ -552,6 +921,7 @@ function updateDeleteUI(){
 deleteBtn.classList.toggle("delete-active",deleteMode);
 }
 
+/* ── ADD MARKER ── */
 map.on("click", e => {
 
 if (
@@ -560,7 +930,6 @@ if (
   !deleteMode &&
   selectedDrone.dataset.icon !== "explosion.png"
 ) {
-
 const from = selectedMarker.getLngLat();
 const to = e.lngLat;
 const angle = getBearing(from.lat, from.lng, to.lat, to.lng);
@@ -588,21 +957,30 @@ if(deleteMode) return;
 
 if(!selectedDrone && currentIcon){
 
+const icon = currentIcon;
+const sz = getMarkerSize(icon);
+
 const wrapper=document.createElement("div");
 wrapper.className="marker-wrapper";
-if(currentIcon === "su-30.png"){
-  wrapper.classList.add("big");
-}
+wrapper.style.width = sz+"px";
+wrapper.style.height = sz+"px";
+
 const drone=document.createElement("div");
 drone.className="drone";
-drone.style.backgroundImage=`url(${currentIcon})`;
+drone.style.backgroundImage=`url(${icon})`;
+drone.style.width="100%";
+drone.style.height="100%";
 drone.dataset.id="drone_"+Date.now()+Math.random();
-drone.dataset.icon = currentIcon;
+drone.dataset.icon = icon;
 wrapper.appendChild(drone);
 
 const marker=new maplibregl.Marker({element:wrapper,draggable:true})
 .setLngLat(e.lngLat)
 .addTo(map);
+
+// Update stats
+markerCounts[icon] = (markerCounts[icon] || 0) + 1;
+updateStats();
 
 marker.on("dragstart",()=>{
 lastDragLngLat = marker.getLngLat();
@@ -632,13 +1010,17 @@ wrapper.onclick=(ev)=>{
 ev.stopPropagation();
 if(deleteMode){
 const id = drone.dataset.id;
+const dicon = drone.dataset.icon;
 directionData.features =
 directionData.features.filter(f => f.properties.id !== id);
 const src = map.getSource("directions");
-if(src){
-src.setData(directionData);
-}
+if(src) src.setData(directionData);
+// Update stats
+markerCounts[dicon] = Math.max(0, (markerCounts[dicon]||0) - 1);
+updateStats();
 wrapper.remove();
+// Also remove maplibre marker
+marker.remove();
 return;
 }
 if(selectedDrone===drone){
@@ -702,7 +1084,6 @@ darkBtn.classList.toggle("active", darkEnabled);
 setWatermark(document.getElementById("watermarkSelect").value);
 };
 
-// Don't set watermark on load — wait for modal selection
 document.getElementById("watermarkSelect").onchange = (e) => {
   setWatermark(e.target.value);
 };
@@ -719,6 +1100,100 @@ map.setLayoutProperty(
 vectorEnabled ? "visible" : "none"
 );
 }
+};
+
+/* ── WATERMARK BUTTON (re-open modal) ── */
+document.getElementById("wmBtn").onclick = () => {
+  // Reset modal state
+  document.querySelectorAll(".wm-option").forEach(o => o.classList.remove("selected"));
+  document.getElementById("customWmInput").value = "";
+  document.getElementById("modal-confirm").disabled = true;
+  selectedWM = null;
+  const ov = document.getElementById("modal-overlay");
+  ov.style.opacity = "";
+  ov.classList.add("visible");
+};
+
+/* ══════════════════════════════
+   SCREENSHOT
+   ══════════════════════════════ */
+document.getElementById("screenshotBtn").onclick = async () => {
+  const toast       = document.getElementById("screenshot-toast");
+  const toolbar     = document.getElementById("toolbar");
+  const statsToggle = document.getElementById("stats-toggle-btn");
+  const mapEl       = document.getElementById("map");
+  const watermark   = document.getElementById("watermark");
+
+  try {
+    // Start capture first so browser dialog appears normally
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      preferCurrentTab: true
+    });
+
+    // Hide ALL chrome: toolbar + toggle btn + toast
+    toolbar.style.display     = "none";
+    statsToggle.style.display = "none";
+    toast.classList.remove("show");
+    toast.style.display       = "none";
+
+    // Expand map to fill full screen (no black bar at top)
+    mapEl.style.top         = "0";
+    watermark.style.top     = "0";
+    const statsPanel = document.getElementById("stats-panel");
+    const origStatsTop = statsPanel.style.top;
+    statsPanel.style.top = "6px";  // move stats up to top of screen
+
+    // Wait 2 frames so browser repaints
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise(r => setTimeout(r, 200));
+
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    await new Promise(r => { video.onloadedmetadata = r; });
+    await video.play();
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise(r => setTimeout(r, 150));
+
+    const out = document.createElement("canvas");
+    out.width  = video.videoWidth;
+    out.height = video.videoHeight;
+    out.getContext("2d").drawImage(video, 0, 0);
+    stream.getTracks().forEach(t => t.stop());
+
+    // Restore everything
+    toolbar.style.display     = "";
+    statsToggle.style.display = "";
+    toast.style.display       = "";
+    mapEl.style.top           = "";
+    watermark.style.top       = "";
+    statsPanel.style.top      = origStatsTop;
+
+    out.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement("a");
+      a.href     = url;
+      a.download = "map_" + new Date().toISOString().slice(0,16).replace(/[:T]/g,"-") + ".png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      toast.textContent = "📸 Збережено!";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }, "image/png");
+
+  } catch(e) {
+    toolbar.style.display     = "";
+    statsToggle.style.display = "";
+    toast.style.display       = "";
+    mapEl.style.top           = "";
+    watermark.style.top       = "";
+    if(typeof statsPanel !== "undefined") statsPanel.style.top = origStatsTop || "";
+    toast.textContent = e.name === "NotAllowedError" ? "❌ Скасовано" : "⚠️ " + e.message;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+  }
 };
 </script>
 </body>
