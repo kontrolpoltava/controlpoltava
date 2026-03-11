@@ -329,61 +329,203 @@ transition:top .25s ease;
 position:fixed;
 top:0;left:0;right:0;
 height:var(--toolbar-h);
-background:#111;
+background:linear-gradient(180deg,#161616 0%,#111 100%);
+border-bottom:1px solid #1e1e1e;
 display:flex;
 align-items:center;
-gap:6px;
-padding:6px;
+gap:4px;
+padding:0 8px;
 z-index:9999;
-overflow-x:auto;
-overflow-y:hidden;
-white-space:nowrap;
-flex-wrap:nowrap;
--webkit-overflow-scrolling:touch;
+box-shadow:0 2px 20px rgba(0,0,0,0.6);
 }
-#toolbar::-webkit-scrollbar{ display:none; }
 
+/* icon buttons */
 .icon-btn,
 .delete-btn{
-min-width:44px;
-min-height:44px;
+width:42px;
+height:42px;
 border-radius:10px;
-background:#222;
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
 display:flex;
 align-items:center;
 justify-content:center;
 cursor:pointer;
-color:#fff;
+color:#aaa;
 flex:0 0 auto;
 box-sizing:border-box;
+transition:background .15s,border-color .15s,color .15s,transform .1s;
 }
-#toolbar > *{ min-height:44px; flex:0 0 auto; }
-.icon-btn img{ max-width:30px; max-height:30px; pointer-events:none; }
-.active{ border:2px solid #00ff88; background:#333; }
-.delete-active{ border:2px solid #ff3333; background:#441111; }
+.icon-btn:hover,.delete-btn:hover{
+background:rgba(255,255,255,0.1);
+border-color:rgba(255,255,255,0.2);
+color:#fff;
+}
+.icon-btn:active,.delete-btn:active{ transform:scale(0.92); }
+.icon-btn img{ width:24px;height:24px;pointer-events:none; }
+.active{ border-color:#00ff88!important; background:rgba(0,255,136,0.12)!important; color:#00ff88!important; }
+.delete-active{ border-color:#ff3333!important; background:rgba(255,51,51,0.12)!important; color:#ff3333!important; }
 
-#watermarkSelect,
-#basemap,
-#markerScale{
-margin-left:4px;
-height:44px;
-background:#000;
-color:#fff;
+/* divider */
+.tb-sep{
+width:1px;height:28px;
+background:rgba(255,255,255,0.1);
+flex:0 0 auto;
+margin:0 2px;
+}
+
+/* control buttons that open popups */
+.tb-ctrl-btn{
+height:42px;
+min-width:42px;
+padding:0 10px;
 border-radius:10px;
-padding:0 6px;
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+display:flex;
+align-items:center;
+gap:6px;
+cursor:pointer;
+color:#ccc;
 flex:0 0 auto;
 box-sizing:border-box;
-border:1px solid #333;
+font-size:12px;
+font-weight:600;
+white-space:nowrap;
+transition:background .15s,border-color .15s,color .15s;
+user-select:none;
+}
+.tb-ctrl-btn:hover{
+background:rgba(255,255,255,0.1);
+border-color:rgba(255,255,255,0.2);
+color:#fff;
+}
+.tb-ctrl-btn i{ font-size:13px; flex:0 0 auto; }
+.tb-ctrl-btn .tb-val{
+color:#fff;
+font-size:11px;
+max-width:72px;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+.tb-ctrl-btn .tb-arrow{
+font-size:9px;
+color:rgba(255,255,255,0.3);
+margin-left:2px;
+transition:transform .2s;
+}
+.tb-ctrl-btn.open .tb-arrow{ transform:rotate(180deg); }
+.tb-ctrl-btn.open{
+border-color:rgba(0,255,136,0.4);
+background:rgba(0,255,136,0.08);
+color:#00ff88;
+}
+
+/* ── POPUP PANELS ── */
+.tb-popup{
+position:fixed;
+top:calc(var(--toolbar-h) + 6px);
+background:#141414;
+border:1px solid #2a2a2a;
+border-radius:14px;
+box-shadow:0 8px 40px rgba(0,0,0,0.8);
+z-index:99998;
+min-width:180px;
+padding:8px;
+display:none;
+flex-direction:column;
+gap:4px;
+animation:popupIn .15s ease;
+}
+.tb-popup.open{ display:flex; }
+
+@keyframes popupIn{
+from{opacity:0;transform:translateY(-6px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+.popup-item{
+display:flex;
+align-items:center;
+gap:10px;
+padding:9px 12px;
+border-radius:9px;
+cursor:pointer;
+color:#bbb;
 font-size:13px;
+font-weight:500;
+transition:background .12s,color .12s;
+user-select:none;
+white-space:nowrap;
 }
-#markerScale{
-min-width:70px;
+.popup-item:hover{
+background:rgba(255,255,255,0.07);
+color:#fff;
 }
+.popup-item.selected{
+background:rgba(0,255,136,0.1);
+color:#00ff88;
+}
+.popup-item i{
+width:16px;
+text-align:center;
+font-size:13px;
+flex:0 0 auto;
+color:inherit;
+}
+.popup-item .pi-check{
+margin-left:auto;
+font-size:11px;
+opacity:0;
+}
+.popup-item.selected .pi-check{ opacity:1; }
+
+.popup-section-label{
+font-size:10px;
+font-weight:700;
+letter-spacing:1px;
+text-transform:uppercase;
+color:#444;
+padding:4px 12px 2px;
+}
+
+/* scale popup — slider style */
+#popup-scale .scale-row{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:4px;
+padding:4px;
+}
+.scale-chip{
+padding:7px 4px;
+border-radius:8px;
+background:rgba(255,255,255,0.04);
+border:1px solid rgba(255,255,255,0.08);
+text-align:center;
+font-size:12px;
+font-weight:600;
+color:#999;
+cursor:pointer;
+transition:all .12s;
+}
+.scale-chip:hover{ background:rgba(255,255,255,0.09); color:#fff; }
+.scale-chip.selected{
+background:rgba(0,255,136,0.12);
+border-color:rgba(0,255,136,0.4);
+color:#00ff88;
+}
+
+/* ── backdrop to close popups ── */
+#popup-backdrop{
+position:fixed;inset:0;
+z-index:99997;
+display:none;
+}
+#popup-backdrop.open{ display:block; }
 
 .marker-wrapper{
 display:flex;align-items:center;justify-content:center;
 }
-.marker-wrapper.big{ width:48px; height:48px; }
 .drone{
 background-size:contain;
 background-repeat:no-repeat;
@@ -451,12 +593,19 @@ transform:translateX(-50%) translateY(0);
 .dark-map .maplibregl-canvas{ filter:var(--map-tiles-filter); }
 .dark-map .drone{ filter:invert(1) hue-rotate(180deg); }
 
-@media (max-width:480px){
-:root{ --toolbar-h:92px; }
-#toolbar{ height:var(--toolbar-h); flex-wrap:wrap; align-content:flex-start; gap:4px; padding:4px; }
-.icon-btn,.delete-btn{ min-width:36px; min-height:36px; }
-#basemap,#watermarkSelect,#markerScale{ height:32px; font-size:12px; }
-#watermark{ opacity:0.35; background-size:140px 90px; }
+/* mobile: toolbar scrollable, popups full-width bottom sheet */
+@media (max-width:600px){
+#toolbar{ gap:3px; padding:0 5px; overflow-x:auto; }
+#toolbar::-webkit-scrollbar{ display:none; }
+.icon-btn,.delete-btn{ width:38px;height:38px; }
+.icon-btn img{ width:21px;height:21px; }
+.tb-ctrl-btn{ height:38px; padding:0 8px; }
+.tb-popup{
+  left:6px!important;
+  right:6px!important;
+  min-width:unset;
+  top:calc(var(--toolbar-h) + 4px);
+}
 }
 </style>
 </head>
@@ -480,11 +629,11 @@ transform:translateX(-50%) translateY(0);
     <h2>Вибір вотермарки</h2>
     <p>Оберіть або введіть власний водяний знак</p>
     <div class="wm-options">
-      <div class="wm-option" data-value="Ukrainian_Intelligence">@Ukrainian_Intelligence<span class="wm-sub">Укр. розвідка</span></div>
-      <div class="wm-option" data-value="controlpoltava">@controlpoltava<span class="wm-sub">Контроль Полтава</span></div>
-      <div class="wm-option" data-value="controlchernihiv">@controlchernihiv<span class="wm-sub">Контроль Чернігів</span></div>
-      <div class="wm-option" data-value="kyiv_airdef">@kyiv_airdef<span class="wm-sub">Київ ППО</span></div>
-      <div class="wm-option" data-value="Sky_UANews">@Sky_UA News<span class="wm-sub">Sky UA News</span></div>
+      <div class="wm-option" data-value="Ukrainian_Intelligence">Ukrainian_Intelligence<span class="wm-sub">Укр. розвідка</span></div>
+      <div class="wm-option" data-value="controlpoltava">controlpoltava<span class="wm-sub">Контроль Полтава</span></div>
+      <div class="wm-option" data-value="controlchernihiv">controlchernihiv<span class="wm-sub">Контроль Чернігів</span></div>
+      <div class="wm-option" data-value="kyiv_airdef">kyiv_airdef<span class="wm-sub">Київ ППО</span></div>
+      <div class="wm-option" data-value="Sky_UANews">Sky_UA News<span class="wm-sub">Sky UA News</span></div>
       <div class="wm-option wm-none" data-value="none"><i class="fas fa-eye-slash" style="margin-right:6px"></i>Без водяного знаку<span class="wm-sub">Без вотермарки</span></div>
     </div>
     <div id="custom-wm-wrap">
@@ -506,6 +655,30 @@ transform:translateX(-50%) translateY(0);
 
 <div id="watermark"></div>
 
+<!-- popup backdrop -->
+<div id="popup-backdrop"></div>
+
+<!-- BASEMAP POPUP -->
+<div class="tb-popup" id="popup-basemap">
+  <div class="popup-section-label">Тип карти</div>
+  <div class="popup-item selected" data-bm="osm"><i class="fas fa-map"></i>OpenStreetMap<i class="fas fa-check pi-check"></i></div>
+  <div class="popup-item" data-bm="terrain"><i class="fas fa-mountain"></i>Google Terrain<i class="fas fa-check pi-check"></i></div>
+  <div class="popup-item" data-bm="satellite"><i class="fas fa-satellite"></i>Google Satellite<i class="fas fa-check pi-check"></i></div>
+</div>
+
+<!-- SCALE POPUP -->
+<div class="tb-popup" id="popup-scale">
+  <div class="popup-section-label">Масштаб цілей</div>
+  <div class="scale-row">
+    <div class="scale-chip" data-sc="0.5">50%</div>
+    <div class="scale-chip" data-sc="0.75">75%</div>
+    <div class="scale-chip selected" data-sc="1">100%</div>
+    <div class="scale-chip" data-sc="1.4">140%</div>
+    <div class="scale-chip" data-sc="1.8">180%</div>
+    <div class="scale-chip" data-sc="2.4">240%</div>
+  </div>
+</div>
+
 <div id="toolbar">
 <div class="icon-btn" data-icon="shahid-136.png"><img src="shahid-136.png"></div>
 <div class="icon-btn" data-icon="shahid-238.png"><img src="shahid-238.png"></div>
@@ -516,32 +689,23 @@ transform:translateX(-50%) translateY(0);
 <div class="icon-btn" data-icon="su-30.png"><img src="su-30.png"></div>
 <div class="icon-btn" data-icon="isk-k.png"><img src="isk-k.png"></div>
 <div class="icon-btn" data-icon="explosion.png"><img src="explosion.png"></div>
-<div id="deleteMode" class="delete-btn"><i class="fas fa-trash-alt"></i></div>
-<div id="darkMode" class="icon-btn"><i class="fas fa-moon"></i></div>
-<div id="vectorToggle" class="icon-btn active"><i class="fas fa-location-arrow"></i></div>
+<div class="tb-sep"></div>
+<div id="deleteMode" class="delete-btn" title="Видалити ціль"><i class="fas fa-trash-alt"></i></div>
+<div id="darkMode" class="icon-btn" title="Темна карта"><i class="fas fa-moon"></i></div>
+<div id="vectorToggle" class="icon-btn active" title="Вектори напрямку"><i class="fas fa-location-arrow"></i></div>
 <div id="screenshotBtn" class="icon-btn" title="Зберегти скрін"><i class="fas fa-camera"></i></div>
 <div id="wmBtn" class="icon-btn" title="Змінити вотермарку"><i class="fas fa-tint"></i></div>
-<select id="markerScale" title="Масштаб цілей">
-  <option value="0.5">50%</option>
-  <option value="0.75">75%</option>
-  <option value="1" selected>100%</option>
-  <option value="1.4">140%</option>
-  <option value="1.8">180%</option>
-  <option value="2.4">240%</option>
-</select>
-<select id="basemap">
-<option value="osm">OpenStreetMap</option>
-<option value="terrain">Google Terrain</option>
-<option value="satellite">Google Satellite</option>
-</select>
-<select id="watermarkSelect">
-  <option value="Ukrainian_Intelligence">@Ukrainian_Intelligence</option>
-  <option value="controlpoltava">@controlpoltava</option>
-  <option value="controlchernihiv">@controlchernihiv</option>
-  <option value="kyiv_airdef">@kyiv_airdef</option>
-  <option value="Sky_UANews">@Sky_UA News</option>
-  <option value="none">— Без вотермарки —</option>
-</select>
+<div class="tb-sep"></div>
+<div class="tb-ctrl-btn" id="btn-basemap" title="Тип карти">
+  <i class="fas fa-map"></i>
+  <span class="tb-val" id="val-basemap">OSM</span>
+  <i class="fas fa-chevron-down tb-arrow"></i>
+</div>
+<div class="tb-ctrl-btn" id="btn-scale" title="Масштаб цілей">
+  <i class="fas fa-expand-arrows-alt"></i>
+  <span class="tb-val" id="val-scale">100%</span>
+  <i class="fas fa-chevron-down tb-arrow"></i>
+</div>
 </div>
 
 <div id="map"></div>
@@ -648,6 +812,8 @@ customWmInput.addEventListener("input", () => {
   }
 });
 
+let currentWatermarkValue = "none";
+
 document.getElementById("modal-confirm").onclick = () => {
   if (selectedWM === null) return;
   let wmValue = selectedWM;
@@ -656,17 +822,7 @@ document.getElementById("modal-confirm").onclick = () => {
     if(!custom) return;
     wmValue = "__custom__:" + custom;
   }
-  // Set select box (best-effort)
-  const sel = document.getElementById("watermarkSelect");
-  if(wmValue.startsWith("__custom__:")){
-    // add option if not exists
-    let opt = sel.querySelector('[value="__custom__"]');
-    if(!opt){ opt = document.createElement("option"); opt.value="__custom__"; sel.appendChild(opt); }
-    opt.textContent = customWmInput.value.trim();
-    sel.value = "__custom__";
-  } else {
-    sel.value = wmValue;
-  }
+  currentWatermarkValue = wmValue;
   setWatermark(wmValue);
   const ov = document.getElementById("modal-overlay");
   ov.style.transition = "opacity .25s";
@@ -823,11 +979,11 @@ paint:{
 
 /* ── WATERMARK ── */
 const watermarkTexts = {
-Ukrainian_Intelligence: "@Ukrainian_Intelligence",
-controlpoltava: "@controlpoltava",
-controlchernihiv: "@controlchernihiv",
-kyiv_airdef: "@kyiv_airdef",
-Sky_UANews: "@Sky_UA News"
+Ukrainian_Intelligence: "Ukrainian_Intelligence",
+controlpoltava: "controlpoltava",
+controlchernihiv: "controlchernihiv",
+kyiv_airdef: "kyiv_airdef",
+Sky_UANews: "Sky_UA News"
 };
 
 function setWatermark(name){
@@ -846,13 +1002,25 @@ if(!text || name === "none"){
 const isDark = document.body.classList.contains("dark-map");
 const fillColor   = isDark ? "#ffffff" : "#000000";
 const fillOpacity = isDark ? "0.28" : "0.45";
-// Scale tile & font based on text length so nothing gets clipped
-const charCount = text.length;
-const tileW  = Math.max(220, charCount * 13);
-const tileH  = Math.round(tileW * 0.65);
-const cx     = tileW / 2;
-const cy     = tileH / 2;
-const fSize  = Math.max(16, Math.min(26, Math.floor(tileW / charCount * 1.55)));
+
+let tileW, tileH, cx, cy, fSize;
+if(name === "Ukrainian_Intelligence"){
+  // Ukrainian_Intelligence — як раніше (без змін)
+  const charCount = text.length;
+  tileW  = Math.max(220, charCount * 13);
+  tileH  = Math.round(tileW * 0.65);
+  cx     = tileW / 2;
+  cy     = tileH / 2;
+  fSize  = Math.max(16, Math.min(26, Math.floor(tileW / charCount * 1.55)));
+} else {
+  // Інші — помірний шрифт, трохи більша відстань між повторами
+  const charCount = text.length;
+  fSize  = Math.max(17, Math.min(24, Math.floor(charCount < 12 ? 24 : 650 / charCount)));
+  tileW  = Math.max(160, charCount * 11);
+  tileH  = Math.round(tileW * 0.55);
+  cx     = tileW / 2;
+  cy     = tileH / 2;
+}
 const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${tileW}' height='${tileH}'>
 <text x='${cx}' y='${cy}'
 text-anchor='middle'
@@ -892,10 +1060,7 @@ function applyScaleToAll(){
   });
 }
 
-document.getElementById("markerScale").onchange = (e) => {
-  markerScale = parseFloat(e.target.value);
-  applyScaleToAll();
-};
+/* markerScale handled by scale-chip popup above */
 
 /* ── ICON BUTTONS ── */
 document.querySelectorAll(".icon-btn").forEach(btn=>{
@@ -1066,14 +1231,64 @@ let brng=toDeg(Math.atan2(y,x));
 return (brng+360)%360;
 }
 
-document.getElementById("basemap").onchange=(e)=>{
-const styles={osm:osmStyle,terrain:terrainStyle,satellite:satelliteStyle};
-const style = styles[e.target.value] || osmStyle;
-map.setStyle(style);
-map.once("styledata",()=>{
-ensureDirectionLayer();
+/* ── BASEMAP POPUP ── */
+const basemapLabels = {osm:"OSM", terrain:"Terrain", satellite:"Satellite"};
+document.querySelectorAll("#popup-basemap .popup-item").forEach(item => {
+  item.onclick = () => {
+    const bm = item.dataset.bm;
+    document.querySelectorAll("#popup-basemap .popup-item").forEach(i=>i.classList.remove("selected"));
+    item.classList.add("selected");
+    document.getElementById("val-basemap").textContent = basemapLabels[bm] || bm;
+    const styles={osm:osmStyle,terrain:terrainStyle,satellite:satelliteStyle};
+    const style = styles[bm] || osmStyle;
+    map.setStyle(style);
+    map.once("styledata",()=>{ ensureDirectionLayer(); });
+    closeAllPopups();
+  };
 });
+
+/* ── SCALE POPUP ── */
+document.querySelectorAll(".scale-chip").forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll(".scale-chip").forEach(c=>c.classList.remove("selected"));
+    chip.classList.add("selected");
+    markerScale = parseFloat(chip.dataset.sc);
+    document.getElementById("val-scale").textContent = chip.textContent;
+    applyScaleToAll();
+    closeAllPopups();
+  };
+});
+
+/* ── POPUP OPEN/CLOSE ── */
+function closeAllPopups(){
+  document.querySelectorAll(".tb-popup").forEach(p=>p.classList.remove("open"));
+  document.querySelectorAll(".tb-ctrl-btn").forEach(b=>b.classList.remove("open"));
+  document.getElementById("popup-backdrop").classList.remove("open");
+}
+function openPopup(popupId, btnEl){
+  const popup = document.getElementById(popupId);
+  const isOpen = popup.classList.contains("open");
+  closeAllPopups();
+  if(isOpen) return;
+  // Position popup below button
+  const rect = btnEl.getBoundingClientRect();
+  if(window.innerWidth > 600){
+    popup.style.left = Math.min(rect.left, window.innerWidth - 220) + "px";
+    popup.style.right = "auto";
+  }
+  popup.classList.add("open");
+  btnEl.classList.add("open");
+  document.getElementById("popup-backdrop").classList.add("open");
+}
+document.getElementById("btn-basemap").onclick = (e) => {
+  e.stopPropagation();
+  openPopup("popup-basemap", document.getElementById("btn-basemap"));
 };
+document.getElementById("btn-scale").onclick = (e) => {
+  e.stopPropagation();
+  openPopup("popup-scale", document.getElementById("btn-scale"));
+};
+document.getElementById("popup-backdrop").onclick = closeAllPopups;
 
 const darkBtn = document.getElementById("darkMode");
 let darkEnabled = false;
@@ -1081,12 +1296,10 @@ darkBtn.onclick = () => {
 darkEnabled = !darkEnabled;
 document.body.classList.toggle("dark-map", darkEnabled);
 darkBtn.classList.toggle("active", darkEnabled);
-setWatermark(document.getElementById("watermarkSelect").value);
+setWatermark(currentWatermarkValue || "none");
 };
 
-document.getElementById("watermarkSelect").onchange = (e) => {
-  setWatermark(e.target.value);
-};
+/* watermark value tracked via modal confirm */
 
 const vectorBtn = document.getElementById("vectorToggle");
 vectorBtn.onclick = () => {
