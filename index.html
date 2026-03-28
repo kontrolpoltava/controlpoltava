@@ -661,8 +661,8 @@ transform:translateX(-50%) translateY(0);
 <!-- BASEMAP POPUP -->
 <div class="tb-popup" id="popup-basemap">
   <div class="popup-section-label">Тип карти</div>
-  <div class="popup-item selected" data-bm="osm"><i class="fas fa-map"></i>OpenStreetMap<i class="fas fa-check pi-check"></i></div>
-  <div class="popup-item" data-bm="terrain"><i class="fas fa-mountain"></i>Google Terrain<i class="fas fa-check pi-check"></i></div>
+  <div class="popup-item" data-bm="osm"><i class="fas fa-map"></i>OpenStreetMap<i class="fas fa-check pi-check"></i></div>
+  <div class="popup-item selected" data-bm="terrain"><i class="fas fa-mountain"></i>Google Terrain<i class="fas fa-check pi-check"></i></div>
   <div class="popup-item" data-bm="satellite"><i class="fas fa-satellite"></i>Google Satellite<i class="fas fa-check pi-check"></i></div>
 </div>
 
@@ -692,13 +692,13 @@ transform:translateX(-50%) translateY(0);
 <div class="tb-sep"></div>
 <div id="deleteMode" class="delete-btn" title="Видалити ціль"><i class="fas fa-trash-alt"></i></div>
 <div id="darkMode" class="icon-btn" title="Темна карта"><i class="fas fa-moon"></i></div>
-<div id="vectorToggle" class="icon-btn active" title="Вектори напрямку"><i class="fas fa-location-arrow"></i></div>
+<div id="dashedToggle" class="icon-btn" title="Показати пунктирні лінії напрямку"><i class="fas fa-location-arrow"></i></div>
 <div id="screenshotBtn" class="icon-btn" title="Зберегти скрін"><i class="fas fa-camera"></i></div>
 <div id="wmBtn" class="icon-btn" title="Змінити вотермарку"><i class="fas fa-tint"></i></div>
 <div class="tb-sep"></div>
 <div class="tb-ctrl-btn" id="btn-basemap" title="Тип карти">
   <i class="fas fa-map"></i>
-  <span class="tb-val" id="val-basemap">OSM</span>
+  <span class="tb-val" id="val-basemap">Terrain</span>
   <i class="fas fa-chevron-down tb-arrow"></i>
 </div>
 <div class="tb-ctrl-btn" id="btn-scale" title="Масштаб цілей">
@@ -900,7 +900,6 @@ let selectedMarker=null;
 let deleteMode=false;
 let lastDragLngLat=null;
 let directionData={type:"FeatureCollection",features:[]};
-let vectorEnabled = true;
 let markerScale = 1; // current scale factor
 
 const osmStyle={
@@ -929,7 +928,7 @@ layers:[
 
 const map=new maplibregl.Map({
 container:"map",
-style:osmStyle,
+style:terrainStyle,
 center:[30.5,50.3],
 zoom:6,
 dragRotate:false,
@@ -951,6 +950,7 @@ map.addLayer({
 id:"direction-layer",
 type:"line",
 source:"directions",
+layout:{"visibility":"none"},
 paint:{
 "line-color":"#ff0000",
 "line-width":2,
@@ -968,6 +968,7 @@ map.addLayer({
 id:"direction-layer",
 type:"line",
 source:"directions",
+layout:{"visibility":"none"},
 paint:{
 "line-color":"#ff0000",
 "line-width":2,
@@ -1301,17 +1302,15 @@ setWatermark(currentWatermarkValue || "none");
 
 /* watermark value tracked via modal confirm */
 
-const vectorBtn = document.getElementById("vectorToggle");
-vectorBtn.onclick = () => {
-vectorEnabled = !vectorEnabled;
-vectorBtn.classList.toggle("active", vectorEnabled);
+/* ── DASHED LINES TOGGLE ── */
+let dashedEnabled = false;
+const dashedBtn = document.getElementById("dashedToggle");
+dashedBtn.onclick = () => {
+dashedEnabled = !dashedEnabled;
+dashedBtn.classList.toggle("active", dashedEnabled);
 const layer = map.getLayer("direction-layer");
 if(layer){
-map.setLayoutProperty(
-"direction-layer",
-"visibility",
-vectorEnabled ? "visible" : "none"
-);
+map.setLayoutProperty("direction-layer","visibility", dashedEnabled ? "visible" : "none");
 }
 };
 
